@@ -1,5 +1,4 @@
 "use client"
-"use client"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
@@ -90,19 +89,28 @@ export default function GroupDetail({ groupId }) {
 
     const handleJoinGroup = (groupId) => {
         setIsMember(true)
-        // Refresh group data to update member count
         window.location.reload()
     }
 
     const handleLeaveGroup = (groupId) => {
         setIsMember(false)
-        // Refresh group data to update member count
         window.location.reload()
     }
 
     const handlePostAdded = (newPost) => {
-        // Add the new post to the posts list
         setPosts(prevPosts => [newPost, ...prevPosts])
+    }
+
+    const handlePostDeleted = (deletedPostId) => {
+        setPosts(prevPosts => prevPosts.filter(post => post._id !== deletedPostId))
+    }
+
+    const handlePostUpdated = (updatedPost) => {
+        setPosts(prevPosts => 
+            prevPosts.map(post => 
+                post._id === updatedPost._id ? updatedPost : post
+            )
+        )
     }
 
     const renderTabContent = () => {
@@ -136,18 +144,9 @@ export default function GroupDetail({ groupId }) {
                         <PostList 
                             posts={posts} 
                             currentUser={currentUser}
-                            onPostUpdated={(updatedPost) => {
-                                setPosts(prevPosts => 
-                                    prevPosts.map(post => 
-                                        post._id === updatedPost._id ? updatedPost : post
-                                    )
-                                )
-                            }}
-                            onPostDeleted={(deletedPostId) => {
-                                setPosts(prevPosts => 
-                                    prevPosts.filter(post => post._id !== deletedPostId)
-                                )
-                            }}
+                            isGroupAdmin={isAdmin}
+                            onPostDeleted={handlePostDeleted}
+                            onPostUpdated={handlePostUpdated}
                         />
                     </div>
                 )
@@ -294,7 +293,7 @@ export default function GroupDetail({ groupId }) {
                     <AddPostModal
                         isOpen={showAddPostModal}
                         onClose={() => setShowAddPostModal(false)}
-                        onSubmit={handlePostAdded}
+                        onPostCreated={handlePostAdded}
                         groupId={groupId}
                     />
                 )}

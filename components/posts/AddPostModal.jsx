@@ -61,39 +61,51 @@ export default function AddPostModal({ isOpen, onClose, onPostCreated, groupId =
         setSearchResults([]);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!validateForm()) return;
-        setIsLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            const postData = {
-                content: formData.content.trim(),
-                tmdbId: formData.tmdbId ? parseInt(formData.tmdbId) : null,
-                tmdbType: formData.tmdbType,
-                tmdbTitle: formData.tmdbTitle.trim() || null,
-                tmdbPosterPath: formData.tmdbPosterPath || null,
-                categories: formData.categories
-            };
-            if (groupId) postData.groupId = groupId;
-            const response = await axios.post('http://localhost:3001/api/posts', postData, {
-                headers: {
-                    'x-auth-token': token,
-                    'Content-Type': 'application/json'
-                }
-            });
-            setFormData({ content: '', tmdbId: '', tmdbType: 'movie', tmdbTitle: '', tmdbPosterPath: '', categories: ['general'] });
-            onClose();
-            if (onPostCreated) onPostCreated(response.data);
-            alert('Post created successfully!');
-        } catch (error) {
-            console.error('Error creating post:', error);
-            alert(error.response?.data?.msg || 'Failed to create post.');
-        } finally {
-            setIsLoading(false);
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    setIsLoading(true);
+    try {
+        const token = localStorage.getItem('token');
+        const postData = {
+            content: formData.content.trim(),
+            categories: formData.categories
+        };
+        
+        // If a movie/TV show is selected, add those fields
+        if (formData.tmdbId && formData.tmdbTitle) {
+            postData.tmdbId = parseInt(formData.tmdbId);
+            postData.tmdbType = formData.tmdbType;
+            postData.tmdbTitle = formData.tmdbTitle.trim();
+            postData.tmdbPosterPath = formData.tmdbPosterPath;
+        } else {
+            // For general posts, use default movie values with special ID
+            postData.tmdbId = -1; // Special ID for general posts
+            postData.tmdbType = 'movie'; // Must be 'movie' or 'tv', not 'general'
+            postData.tmdbTitle = 'General Discussion';
+            postData.tmdbPosterPath = '';
         }
-    };
-
+        
+        if (groupId) postData.groupId = groupId;
+        
+        const response = await axios.post('http://localhost:3001/api/posts', postData, {
+            headers: {
+                'x-auth-token': token,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        setFormData({ content: '', tmdbId: '', tmdbType: 'movie', tmdbTitle: '', tmdbPosterPath: '', categories: ['general'] });
+        onClose();
+        if (onPostCreated) onPostCreated(response.data);
+        alert('Post created successfully!');
+    } catch (error) {
+        console.error('Error creating post:', error);
+        alert(error.response?.data?.msg || 'Failed to create post.');
+    } finally {
+        setIsLoading(false);
+    }
+};
     const categories = [
         { id: 'review', label: 'Review', icon: '⭐' },
         { id: 'recommendation', label: 'Recommendation', icon: '👍' },
