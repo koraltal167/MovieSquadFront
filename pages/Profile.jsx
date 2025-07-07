@@ -14,6 +14,7 @@ export default function Profile() {
   const router = useRouter(); // הוספתי את זה
 
   useEffect(() => {
+    console.clear(); // Clear console when component loads
     const fetchUserAndPosts = async () => {
       try {
         const userData = localStorage.getItem("user");

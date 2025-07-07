@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import PostList from "../posts/PostList";
 import GroupList from "../groups/GroupList";
+import CreateGroupForm from "../groups/CreateGroupForm";
 
 export default function ProfileTabs({ 
   activeTab, 
@@ -17,6 +18,7 @@ export default function ProfileTabs({
   const [userGroups, setUserGroups] = useState([]);
   const [watchedMovies, setWatchedMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
 
   useEffect(() => {
     if (activeTab === "groups") {
@@ -77,6 +79,12 @@ export default function ProfileTabs({
     setUserGroups(prev => prev.filter(group => group._id !== groupId));
   };
 
+  const handleGroupCreated = (newGroup) => {
+    // Add new group to list and close form
+    setUserGroups(prev => [newGroup, ...prev]);
+    setShowCreateGroup(false);
+  };
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -102,9 +110,30 @@ export default function ProfileTabs({
       case "groups":
         return (
           <div>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5>My Groups</h5>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setShowCreateGroup(!showCreateGroup)}
+              >
+                <i className="bi bi-plus-circle me-2"></i>
+                {showCreateGroup ? 'Cancel' : 'Create Group'}
+              </button>
+            </div>
+            
+            {showCreateGroup && (
+              <div className="mb-4">
+                <CreateGroupForm
+                  currentUser={currentUser}
+                  onGroupCreated={handleGroupCreated}
+                  onCancel={() => setShowCreateGroup(false)}
+                />
+              </div>
+            )}
+            
             {userGroups.length === 0 ? (
               <div className="text-center py-4">
-                <p className="text-muted">No groups found. Join some groups to see them here!</p>
+                <p className="text-muted">No groups found. Create or join some groups to see them here!</p>
               </div>
             ) : (
               <GroupList
