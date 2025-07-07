@@ -3,9 +3,23 @@
 import { useState } from "react"
 import axios from "axios"
 
-export default function JoinGroupButton({ groupId, groupName, isPrivate, isMember, onJoined, onLeft }) {
+export default function JoinGroupButton({ groupId, groupName, isPrivate, isMember, isCreator, onJoined, onLeft }) {
     const [isLoading, setIsLoading] = useState(false)
     const [hasRequestedJoin, setHasRequestedJoin] = useState(false)
+
+    // Don't show button if user is creator
+    if (isCreator) {
+        return (
+            <div className="d-flex flex-column align-items-center">
+                <span className="badge bg-success mb-1" style={{ fontSize: '0.7rem' }}>
+                    👑 Creator
+                </span>
+                <small className="text-muted" style={{ fontSize: '0.65rem' }}>
+                    Your Group
+                </small>
+            </div>
+        )
+    }
 
     const handleJoinGroup = async () => {
         if (!groupId || isLoading) return

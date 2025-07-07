@@ -17,6 +17,7 @@ export default function GroupDetail({ groupId }) {
     const [error, setError] = useState(null)
     const [isMember, setIsMember] = useState(false)
     const [isAdmin, setIsAdmin] = useState(false)
+    const [isCreator, setIsCreator] = useState(false)
     const [showAddPostModal, setShowAddPostModal] = useState(false)
     const router = useRouter()
 
@@ -44,14 +45,16 @@ export default function GroupDetail({ groupId }) {
                 const groupData = groupResponse.data
                 setGroup(groupData)
 
-                // Check if user is member or admin
+                // Check if user is member, admin, or creator
                 const userIsMember = groupData.members.some(member => 
                     (member._id || member.id) === (parsedUser._id || parsedUser.id)
                 )
                 const userIsAdmin = (groupData.admin._id || groupData.admin.id) === (parsedUser._id || parsedUser.id)
+                const userIsCreator = (groupData.creator?._id || groupData.creator?.id || groupData.admin._id || groupData.admin.id) === (parsedUser._id || parsedUser.id)
                 
                 setIsMember(userIsMember)
                 setIsAdmin(userIsAdmin)
+                setIsCreator(userIsCreator)
 
                 // Fetch posts for this group
                 if (userIsMember) {
@@ -188,9 +191,9 @@ export default function GroupDetail({ groupId }) {
 
     if (isLoading) {
         return (
-            <div className="container-fluid" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+            <div className="container-fluid" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
                 <div className="text-center p-5">
-                    <div className="spinner-border text-warning" role="status">
+                    <div className="spinner-border text-primary" role="status">
                         <span className="visually-hidden">Loading...</span>
                     </div>
                 </div>
@@ -200,7 +203,7 @@ export default function GroupDetail({ groupId }) {
 
     if (error) {
         return (
-            <div className="container-fluid" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+            <div className="container-fluid" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
                 <div className="text-center p-5">
                     <div className="alert alert-danger" role="alert">
                         {error}
@@ -212,7 +215,7 @@ export default function GroupDetail({ groupId }) {
 
     if (!group) {
         return (
-            <div className="container-fluid" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+            <div className="container-fluid" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
                 <div className="text-center p-5">
                     <div className="alert alert-warning" role="alert">
                         Group not found
@@ -223,14 +226,14 @@ export default function GroupDetail({ groupId }) {
     }
 
     return (
-        <div className="container-fluid" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+        <div className="container-fluid" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
             <div className="container py-4">
                 {/* Group Header */}
-                <div className="card mb-4" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
+                <div className="card mb-4 shadow-sm" style={{ backgroundColor: '#ffffff', border: '1px solid #dee2e6' }}>
                     <div className="card-body">
                         <div className="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <h1 className="text-white mb-2">{group.name}</h1>
+                                <h1 className="text-dark mb-2">{group.name}</h1>
                                 <p className="text-muted mb-3">{group.description}</p>
                                 <div className="d-flex align-items-center gap-3">
                                     <small className="text-muted">
@@ -250,6 +253,7 @@ export default function GroupDetail({ groupId }) {
                                     groupName={group.name}
                                     isPrivate={group.isPrivate}
                                     isMember={isMember}
+                                    isCreator={isCreator}
                                     onJoined={handleJoinGroup}
                                     onLeft={handleLeaveGroup}
                                 />
@@ -259,7 +263,7 @@ export default function GroupDetail({ groupId }) {
                 </div>
 
                 {/* Navigation Tabs */}
-                <div className="card mb-4" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
+                <div className="card mb-4 shadow-sm" style={{ backgroundColor: '#ffffff', border: '1px solid #dee2e6' }}>
                     <div className="card-body">
                         <ul className="nav nav-tabs border-0">
                             {['posts', 'members', 'about'].map(tab => (
@@ -268,7 +272,7 @@ export default function GroupDetail({ groupId }) {
                                     className={`nav-link ${activeTab === tab ? 'active' : ''}`}
                                     onClick={() => setActiveTab(tab)}
                                     style={{
-                                        backgroundColor: activeTab === tab ? '#8b5cf6' : 'transparent',
+                                        backgroundColor: activeTab === tab ? '#007bff' : 'transparent',
                                         color: activeTab === tab ? 'white' : '#6c757d',
                                         border: 'none',
                                         borderRadius: '8px 8px 0 0',
@@ -283,7 +287,9 @@ export default function GroupDetail({ groupId }) {
                         </ul>
                         
                         <div className="tab-content mt-3">
-                            {renderTabContent()}
+                            <div className="text-dark">
+                                {renderTabContent()}
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -3,12 +3,14 @@
 import { useState } from "react"
 import JoinGroupButton from "./JoinGroupButton"
 
-export default function GroupCard({ group, currentUser, onGroupJoined, onGroupLeft }) {
+export default function GroupCard({ group, currentUser, onGroupJoined, onGroupLeft, onViewGroup }) {
     const [isExpanded, setIsExpanded] = useState(false)
     
     // Check if user is member or creator
-    const isCreator = group.admin === currentUser._id
-    const isMember = group.members.includes(currentUser._id)
+    const isCreator = group.admin === currentUser._id || group.admin?._id === currentUser._id
+    const isMember = group.members.some(member => 
+        (member._id || member.id || member) === (currentUser._id || currentUser.id)
+    )
     
     // Truncate description
     const truncatedDescription = group.description.length > 100 
@@ -16,8 +18,10 @@ export default function GroupCard({ group, currentUser, onGroupJoined, onGroupLe
         : group.description
 
     const handleViewGroup = () => {
-        // Create a modal or detailed view of the group
-        alert(`Group: ${group.name}\nDescription: ${group.description}\nMembers: ${group.members.length}\nPrivate: ${group.isPrivate ? 'Yes' : 'No'}\nAdmin: ${group.admin?.username || 'Unknown'}`)
+        // Use callback instead of router
+        if (onViewGroup) {
+            onViewGroup(group._id)
+        }
     }
 
     return (
@@ -90,12 +94,14 @@ export default function GroupCard({ group, currentUser, onGroupJoined, onGroupLe
                             View Group
                         </button>
                         
+                        {/* Show Join button only if not creator */}
                         {!isCreator && (
                             <JoinGroupButton
                                 groupId={group._id}
                                 groupName={group.name}
                                 isPrivate={group.isPrivate}
                                 isMember={isMember}
+                                isCreator={isCreator}
                                 onJoined={onGroupJoined}
                                 onLeft={onGroupLeft}
                             />

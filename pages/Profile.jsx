@@ -1,5 +1,7 @@
-// Profile.jsx
+"use client"
+
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // הוספתי את זה
 import axios from "axios";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
@@ -9,53 +11,54 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [userPosts, setUserPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter(); // הוספתי את זה
 
   useEffect(() => {
-  const fetchUserAndPosts = async () => {
-    try {
-      const userData = localStorage.getItem("user");
-      const token = localStorage.getItem("token");
+    const fetchUserAndPosts = async () => {
+      try {
+        const userData = localStorage.getItem("user");
+        const token = localStorage.getItem("token");
 
-      console.log("User data:", userData);
-      console.log("Token:", token);
+        console.log("User data:", userData);
+        console.log("Token:", token);
 
-      if (userData && token) {
-        const parsedUser = JSON.parse(userData);
+        if (userData && token) {
+          const parsedUser = JSON.parse(userData);
 
-        // Fetch posts and count
-        const fetchedPosts = await fetchUserPosts(parsedUser);
-        const postCount = fetchedPosts.length;
+          // Fetch posts and count
+          const fetchedPosts = await fetchUserPosts(parsedUser);
+          const postCount = fetchedPosts.length;
 
-        console.log("Posts count:", postCount);
+          console.log("Posts count:", postCount);
 
-        // Fetch friends and watched count
-        const friendsCount = await fetchFriendsCount(token);
-        const watchedCount = await fetchWatchedCount(token);
+          // Fetch friends and watched count
+          const friendsCount = await fetchFriendsCount(token);
+          const watchedCount = await fetchWatchedCount(token);
 
-        console.log("Friends count:", friendsCount);
-        console.log("Watched count:", watchedCount);
+          console.log("Friends count:", friendsCount);
+          console.log("Watched count:", watchedCount);
 
-        // Set full user object with all dynamic counts
-        setUser({
-          id: parsedUser._id || parsedUser.id,
-          username: parsedUser.username,
-          email: parsedUser.email,
-          profilePicture: parsedUser.profilePicture || "https://via.placeholder.com/100",
-          postsCount: postCount,
-          friendsCount,
-          watchedCount,
-          favoriteGenres: parsedUser.favoriteGenres || ["Drama", "Comedy", "Action"],
-        });
+          // Set full user object with all dynamic counts
+          setUser({
+            id: parsedUser._id || parsedUser.id,
+            username: parsedUser.username,
+            email: parsedUser.email,
+            profilePicture: parsedUser.profilePicture || "https://via.placeholder.com/100",
+            postsCount: postCount,
+            friendsCount,
+            watchedCount,
+            favoriteGenres: parsedUser.favoriteGenres || ["Drama", "Comedy", "Action"],
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  fetchUserAndPosts();
-}, []);
+    fetchUserAndPosts();
+  }, []);
 
   //  Fetch posts for current user and return them
   const fetchUserPosts = async (parsedUser) => {
@@ -105,6 +108,11 @@ export default function Profile() {
   const handleViewProfile = (userId) => {
     // Open user profile in new tab
     window.open(`/profile/${userId}`, '_blank');
+  };
+
+  // הוספתי פונקציה חדשה לטיפול בצפייה בקבוצה
+  const handleViewGroup = (groupId) => {
+    router.push(`/groups/${groupId}`);
   };
 
   //  Get number of friends from backend
@@ -175,6 +183,7 @@ export default function Profile() {
           onLikePost={handleLikePost}
           currentUser={user}
           onViewProfile={handleViewProfile}
+          onViewGroup={handleViewGroup} 
         />
       </div>
     </div>
