@@ -44,6 +44,7 @@ export default function Profile() {
             id: parsedUser._id || parsedUser.id,
             username: parsedUser.username,
             email: parsedUser.email,
+            bio: parsedUser.bio || '',
             profilePicture: parsedUser.profilePicture || "https://via.placeholder.com/100",
             postsCount: postCount,
             friendsCount,
@@ -94,13 +95,7 @@ export default function Profile() {
     }
   };
 
-  const handleEdit = () => {
-    alert("Edit profile clicked");
-  };
 
-  const handleSettings = () => {
-    alert("Settings clicked");
-  };
 
   const handleLikePost = (postId) => {
     alert(`Liked post ${postId}`);
@@ -115,6 +110,11 @@ export default function Profile() {
   const handleViewGroup = (groupId) => {
     router.push(`/groups/${groupId}`);
   };
+  const handleUserUpdated = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
 
   //  Get number of friends from backend
   const fetchFriendsCount = async (token) => {
@@ -205,9 +205,8 @@ const handlePostUpdated = (updatedPost) => {
     <div className="profile-content">
       <ProfileHeader
         user={user}
-        onEdit={handleEdit}
-        onSettings={handleSettings}
         onPostCreated={handlePostCreated}
+        onUserUpdated={handleUserUpdated}
       />
       <div className="mt-4">
         <ProfileTabs

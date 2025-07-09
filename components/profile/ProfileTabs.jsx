@@ -7,30 +7,32 @@ import GroupList from "../groups/GroupList";
 import CreateGroupForm from "../groups/CreateGroupForm";
 import FriendsList from "../friends/FriendsList";      // הוסף את זה
 import FriendRequests from "../friends/FriendRequests"; // הוסף את זה
-import UserSearch from "../friends/UserSearch";  
-import EmptyState from "../EmptyState";  
+import UserSearch from "../friends/UserSearch"; 
+import WatchlistContent from "./WatchlistContent";
+ 
 
 export default function ProfileTabs({ 
   activeTab, 
   onTabChange, 
   userPosts = [], 
-  userGroups = [],
   onLikePost, 
   currentUser, 
   onViewProfile, 
   onViewGroup,
-  onGroupCreated, 
-  onPostDeleted,    
+  onPostDeleted,
   onPostUpdated 
 }) {
   const [watchedMovies, setWatchedMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [localPosts, setLocalPosts] = useState(userPosts); // הוספת state מקומי לפוסטים
+  const [userGroups, setUserGroups] = useState([]);         // ✅ הוסף state לקבוצות
+
 
   // Safe arrays
   const safePosts = Array.isArray(localPosts) ? localPosts : [];
   const safeGroups = Array.isArray(userGroups) ? userGroups : [];
+  const safeWatchedMovies = Array.isArray(watchedMovies) ? watchedMovies : [];
 
   // עדכן את הפוסטים המקומיים כשמגיעים פוסטים חדשים
   useEffect(() => {
@@ -40,6 +42,9 @@ export default function ProfileTabs({
   useEffect(() => {
     if (activeTab === "watched") {
       fetchWatchedMovies();
+    
+     } else if (activeTab === "groups") {
+      fetchUserGroups(); // ✅ הוסף קריאה לפונקציה
     }
   }, [activeTab]);
 
@@ -60,11 +65,50 @@ export default function ProfileTabs({
   };
 
   const handleGroupJoined = (groupId) => {
-    console.log('Joined group:', groupId);
+    fetchUserGroups(); 
   };
 
   const handleGroupLeft = (groupId) => {
-    console.log('Left group:', groupId);
+    setUserGroups(prev => prev.filter(group => group._id !== groupId));
+  };
+   // ✅ פונקציה חדשה לטעינת הקבוצות של המשתמש
+  const fetchUserGroups = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      
+      // קבל את כל הקבוצות
+      const response = await axios.get("http://localhost:3001/api/groups", {
+        headers: { "x-auth-token": token },
+      });
+      
+      console.log("All groups:", response.data);
+      
+      // סנן רק את הקבוצות שהמשתמש חבר בהן או יוצר שלהן
+      const allGroups = response.data;
+      const currentUserId = currentUser?.id || currentUser?._id;
+      
+      const filteredGroups = allGroups.filter(group => {
+        // בדוק אם המשתמש הוא יוצר הקבוצה
+        const isCreator = (group.admin?._id || group.admin?.id || group.admin) === currentUserId;
+        
+        // בדוק אם המשתמש חבר בקבוצה
+        const isMember = group.members && group.members.some(member => {
+          const memberId = member._id || member.id || member;
+          return memberId === currentUserId;
+        });
+        
+        return isCreator || isMember;
+      });
+      
+      console.log("User groups:", filteredGroups);
+      setUserGroups(filteredGroups);
+    } catch (error) {
+      console.error("Error fetching user groups:", error);
+      setUserGroups([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGroupCreatedLocal = (newGroup) => {
@@ -73,6 +117,12 @@ export default function ProfileTabs({
       onGroupCreated(newGroup);
     }
   };
+   const handleGroupCreated = (newGroup) => {
+    setUserGroups(prev => [newGroup, ...prev]);
+    setShowCreateGroup(false);
+    alert('Group created successfully!');
+  };
+  
 
   // פונקציה לטיפול במחיקת פוסט
   const handlePostDeleted = (deletedPostId) => {
@@ -154,30 +204,33 @@ export default function ProfileTabs({
       case "groups":
         return (
           <div>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="text-white">My Groups ({safeGroups.length})</h5>
-              <button 
-                className="btn btn-primary"
+            {/* כפתור ליצירת קבוצה חדשה */}
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <h5 className="text-white mb-0">👥 My Groups ({userGroups.length})</h5>
+              <button
+                className="btn btn-warning btn-sm"
                 onClick={() => setShowCreateGroup(!showCreateGroup)}
               >
-                <span className="me-2">➕</span>
-                {showCreateGroup ? 'Cancel' : 'Create Group'}
+                {showCreateGroup ? '❌ Cancel' : '➕ Create Group'}
               </button>
             </div>
-            
+
+            {/* טופס יצירת קבוצה */}
             {showCreateGroup && (
               <div className="card mb-4" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
                 <div className="card-body">
+                  <h6 className="text-white mb-3">✨ Create New Group</h6>
                   <CreateGroupForm
                     currentUser={currentUser}
-                    onGroupCreated={handleGroupCreatedLocal}
+                    onGroupCreated={handleGroupCreated}
                     onCancel={() => setShowCreateGroup(false)}
                   />
                 </div>
               </div>
             )}
-            
-            {safeGroups.length === 0 ? (
+
+            {/* רשימת הקבוצות */}
+            {userGroups.length === 0 ? (
               <div className="text-center py-5">
                 <div className="text-muted">
                   <h5>👥</h5>
@@ -187,7 +240,7 @@ export default function ProfileTabs({
               </div>
             ) : (
               <GroupList
-                groups={safeGroups}
+                groups={userGroups}
                 currentUser={currentUser}
                 onGroupJoined={handleGroupJoined}
                 onGroupLeft={handleGroupLeft}
@@ -196,43 +249,10 @@ export default function ProfileTabs({
             )}
           </div>
         );
-
       case "watched":
         return (
           <div>
-            {watchedMovies.length === 0 ? (
-              <div className="text-center py-5">
-                <div className="text-muted">
-                  <h5>🎬</h5>
-                  <p>No watched movies yet</p>
-                  <small>Start watching and rating movies!</small>
-                </div>
-              </div>
-            ) : (
-              <div className="row">
-                {watchedMovies.map((movie) => (
-                  <div key={movie.id} className="col-md-4 mb-3">
-                    <div className="card" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
-                      <img
-                        src={movie.poster || "https://via.placeholder.com/300x450"}
-                        alt={movie.title}
-                        className="card-img-top"
-                        style={{ height: "200px", objectFit: "cover" }}
-                      />
-                      <div className="card-body">
-                        <h6 className="card-title text-white">{movie.title}</h6>
-                        <p className="card-text text-muted">{movie.year}</p>
-                        {movie.rating && (
-                          <div className="text-warning">
-                            {'⭐'.repeat(Math.floor(movie.rating / 2))} {movie.rating}/10
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <WatchlistContent currentUser={currentUser} />
           </div>
         );
 
@@ -323,7 +343,7 @@ export default function ProfileTabs({
               color: activeTab === "watched" ? 'white' : '#ccc'
             }}
           >
-            Watched ({watchedMovies.length})
+            ❤️ Favorites ({currentUser?.favoriteMovies?.length() || 0})
           </button>
         </li>
       </ul>

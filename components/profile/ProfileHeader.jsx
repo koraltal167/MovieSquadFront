@@ -1,10 +1,14 @@
 import React from "react";
 import { useState } from "react"
 
+import EditProfileModal from "./EditProfileModal";
+import ProfileSettingsModal from "./ProfileSettingsModal";
 import AddPostModal from "../posts/AddPostModal";
 
-export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated }) {
+export default function ProfileHeader({ user, onUserUpdated, onPostCreated }) {
     const [showCreatePost, setShowCreatePost] = useState(false);
+    const [showEditProfile, setShowEditProfile] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
     const handleCreatePost = () => {
     setShowCreatePost(true);
   };
@@ -20,6 +24,19 @@ export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated 
       onPostCreated(newPost);
     }
   };
+  const handleEdit = () => {
+    setShowEditProfile(true);
+};
+
+const handleSettings = () => {
+    setShowSettings(true);
+};
+
+const handleUserUpdated = (updatedUser) => {
+    if (onUserUpdated) {
+        onUserUpdated(updatedUser);
+    }
+};
 
 
   return (
@@ -40,6 +57,11 @@ export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated 
           <div className="col">
             <h2 className="mb-1 text-white">{user.username}</h2>
             <p className="text-white mb-2">{user.email}</p>
+            {user.bio && (
+              <p className="text-light mb-3 fst-italic">
+                "{user.bio}"
+              </p>
+            )}
             <div className="row text-center">
               <div className="col-4">
                 <strong className="text-white">{user.postsCount}</strong>
@@ -68,7 +90,7 @@ export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated 
               {/* Edit Profile Button */}
               <button 
                 className="btn btn-outline-primary"
-                onClick={onEdit}
+                onClick={handleEdit} 
               >
                 ✏️ Edit Profile
               </button>
@@ -76,7 +98,7 @@ export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated 
               {/* Settings Button */}
               <button 
                 className="btn btn-outline-secondary"
-                onClick={onSettings}
+                onClick={handleSettings}
               >
                 ⚙️ Settings
               </button>
@@ -105,6 +127,18 @@ export default function ProfileHeader({ user, onEdit, onSettings, onPostCreated 
         </div>
       </div>
     </div>
+    <EditProfileModal
+            isOpen={showEditProfile}
+            onClose={() => setShowEditProfile(false)}
+            currentUser={user}
+            onUserUpdated={handleUserUpdated}
+        />
+        
+        <ProfileSettingsModal
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            currentUser={user}
+        />
       <AddPostModal
       isOpen={showCreatePost}
       onClose={handleCloseCreatePost}
