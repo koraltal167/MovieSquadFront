@@ -32,9 +32,12 @@ export default function PostCard({ post, currentUser, isGroupAdmin, onPostDelete
     // Check if user can delete this post
     const canDeletePost = () => {
         if (!localCurrentUser) return false;
+
+        const userId = localCurrentUser.id || localCurrentUser._id;
+        const authorId = post.author?._id || post.author?.id;
         
         // User can delete if they are the post author
-        if (post.author && post.author._id === localCurrentUser._id) {
+         if (userId && authorId && userId === authorId) {
             return true;
         }
         
@@ -54,11 +57,14 @@ export default function PostCard({ post, currentUser, isGroupAdmin, onPostDelete
     // Check if user can edit this post
     const canEditPost = () => {
         if (!localCurrentUser) return false;
+
+        const userId = localCurrentUser.id || localCurrentUser._id;
+        const authorId = post.author?._id || post.author?.id;
         
         // Only the post author can edit
-        if (post.author && post.author._id === localCurrentUser._id) {
-            return true;
-        }
+        if (userId && authorId && userId === authorId) {
+           return true;
+      }
         
         return false;
     };
@@ -123,8 +129,18 @@ export default function PostCard({ post, currentUser, isGroupAdmin, onPostDelete
             setIsLoading(false);
         }
     };
+     console.log('PostCard Debug:', {
+        postId: post._id,
+        postAuthor: post.author,
+        currentUser: localCurrentUser,
+        canEdit: canEditPost(),
+        canDelete: canDeletePost(),
+        isGroupAdmin
+    });
+
 
     return (
+        
         <div className="card mb-3 shadow-sm">
             <div className="card-body">
                 {/* Action Buttons */}

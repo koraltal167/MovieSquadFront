@@ -7,98 +7,100 @@ export default function FriendCard({ friend, currentUser, onRemoveFriend, onView
     const [isRemoving, setIsRemoving] = useState(false)
 
     const handleRemove = async () => {
-        const confirmMessage = `Remove ${friend.username} from your friends?\n\nNote: This will only remove them from YOUR friends list. They will still see you in their friends list until they refresh or remove you as well.`
+        const confirmMessage = `Remove ${friend.username} from your friends?\n\n⚠️ This will remove them from BOTH friends lists (yours and theirs).`
         
         if (window.confirm(confirmMessage)) {
             setIsRemoving(true)
-            await onRemoveFriend(friend._id || friend.id)
-            setIsRemoving(false)
+            try {
+                // ✅ רק קרא לפונקציה מה-parent, אל תעשה API call כאן
+                await onRemoveFriend(friend._id || friend.id)
+                // ✅ הסר את alert מכאן - זה יהיה ב-FriendsList
+            } catch (error) {
+                console.error('Error removing friend:', error)
+                alert('Failed to remove friend. Please try again.')
+            } finally {
+                setIsRemoving(false)
+            }
         }
     }
 
-    const handleStatusChange = (userId, newStatus) => {
-        if (newStatus === "none" && onRemoveFriend) {
-            onRemoveFriend(userId)
+    const handleViewProfile = () => {
+        if (onViewProfile) {
+            onViewProfile(friend._id || friend.id)
         }
     }
 
     return (
-        <div className="card mb-3" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
-            <div className="card-body">
-                <div className="d-flex align-items-center">
-                    {/* Profile Picture */}
-                    <div className="me-3">
+        <div className="card h-100" style={{ backgroundColor: '#2c2c2c', border: '1px solid #444' }}>
+            <div className="card-body d-flex flex-column">
+                {/* Profile Section */}
+                <div className="text-center mb-3">
+                    <div className="mb-3">
                         <img
-                            src={friend.profilePicture || "https://via.placeholder.com/60"}
-                            alt={friend.username}
+                            src={friend.profilePicture || '/images/no-avatar.jpg'}
+                            alt={`${friend.username}'s avatar`}
                             className="rounded-circle"
-                            style={{ 
-                                width: '60px', 
-                                height: '60px',
-                                objectFit: 'cover',
-                                border: '2px solid #ff8c00'
+                            style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                            onError={(e) => {
+                                e.target.src = '/images/no-avatar.jpg'
                             }}
                         />
                     </div>
-
-                    {/* Friend Info */}
-                    <div className="flex-grow-1">
-                        <h6 className="card-title mb-1 text-white">
-                            {friend.username}
-                        </h6>
-                        <p className="card-text text-white mb-2" style={{ fontSize: '0.9rem' }}>
-                            {friend.email}
+                    
+                    <h6 className="card-title text-white mb-1">{friend.username}</h6>
+                    <p className="card-text text-muted small mb-0">{friend.email}</p>
+                    
+                    {friend.bio && (
+                        <p className="card-text text-light small mt-2 fst-italic">
+                            "{friend.bio}"
                         </p>
-                        
-                        {/* Friend Stats */}
-                        <div className="d-flex gap-3 text-white" style={{ fontSize: '0.8rem' }}>
-                            <span>📝 {friend.postsCount || 0} posts</span>
-                            <span>🎬 {friend.watchedCount || 0} watched</span>
-                            <span>👥 {friend.friendsCount || 0} friends</span>
-                        </div>
-
-                        {/* Favorite Genres */}
-                        {friend.favoriteGenres && friend.favoriteGenres.length > 0 && (
-                            <div className="mt-2">
-                                <small className="text-white">Favorite genres: </small>
-                                {friend.favoriteGenres.slice(0, 3).map((genre, index) => (
-                                    <span
-                                        key={index}
-                                        className="badge me-1"
-                                        style={{ 
-                                            backgroundColor: '#ff8c00', 
-                                            color: 'white',
-                                            border: '1px solid #ff8c00',
-                                            fontSize: '0.7rem'
-                                        }}
-                                    >
-                                        {genre}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Actions */}
-                    {showActions && (
-                        <div className="d-flex flex-column gap-2">
-                            <button
-                                type="button"
-                                className="btn btn-outline-info btn-sm"
-                                onClick={() => onViewProfile(friend._id || friend.id)}
-                            >
-                                View Profile
-                            </button>
-                            
-                            <AddFriendButton
-                                userId={friend._id || friend.id}
-                                username={friend.username}
-                                currentStatus="friends"
-                                onStatusChange={handleStatusChange}
-                            />
-                        </div>
                     )}
                 </div>
+
+                {/* Stats */}
+                <div className="d-flex justify-content-around mb-3 text-center">
+                    <div>
+                        <div className="text-warning fw-bold">{friend.postsCount || 0}</div>
+                        <small className="text-muted">Posts</small>
+                    </div>
+                    <div>
+                        <div className="text-info fw-bold">{friend.friendsCount || 0}</div>
+                        <small className="text-muted">Friends</small>
+                    </div>
+                    <div>
+                        <div className="text-success fw-bold">{friend.moviesWatched || 0}</div>
+                        <small className="text-muted">Movies</small>
+                    </div>
+                </div>
+
+                {/* Actions */}
+                {showActions && (
+                    <div className="mt-auto">
+                        <div className="d-grid gap-2">
+                            <button
+                                className="btn btn-outline-info btn-sm"
+                                onClick={handleViewProfile}
+                            >
+                                👤 View Profile
+                            </button>
+                            
+                            <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={handleRemove}
+                                disabled={isRemoving}
+                            >
+                                {isRemoving ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        Removing...
+                                    </>
+                                ) : (
+                                    <>🗑️ Remove Friend</>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

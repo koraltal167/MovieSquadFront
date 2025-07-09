@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // הוספתי את זה
+import { useRouter } from "next/navigation"; 
 import axios from "axios";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
@@ -118,20 +118,53 @@ export default function Profile() {
 
   //  Get number of friends from backend
   const fetchFriendsCount = async (token) => {
-    try {
-      console.log("Fetching friends with token:", token);
-      const res = await axios.get(`http://localhost:3001/api/user/me/friends`, {
-        headers: {'x-auth-token': token },
-      });
-      console.log("Friends response:", res.data);
-      return Array.isArray(res.data) ? res.data.length : 0;
-    } catch (error) {
-      console.error("Failed to fetch friends:", error);
-      console.error("Error status:", error.response?.status);
-      console.error("Error data:", error.response?.data);
-      return 0;
-    }
-  };
+  try {
+    console.log("Fetching friends with token:", token);
+    const res = await axios.get(`http://localhost:3001/api/user/me/friends`, {
+      headers: {'x-auth-token': token },
+    });
+    console.log("Friends response:", res.data);
+    const friendsCount = Array.isArray(res.data) ? res.data.length : 0;
+
+    // ✅ עדכן את המשתמש עם friendsCount
+    setUser(prevUser => ({
+      ...prevUser,
+      friendsCount: friendsCount
+    }));
+   
+    return friendsCount;
+  } catch (error) {
+    console.error("Failed to fetch friends:", error);
+    console.error("Error status:", error.response?.status);
+    console.error("Error data:", error.response?.data);
+    
+    // גם במקרה של שגיאה, עדכן עם 0
+    setUser(prevUser => ({
+      ...prevUser,
+      friendsCount: 0
+    }));
+    
+    return 0;
+  }
+};
+  const handlePostDeleted = (deletedPostId) => {
+  console.log('Post deleted from profile:', deletedPostId);
+  setUserPosts(prevPosts => prevPosts.filter(post => post._id !== deletedPostId));
+  
+  // עדכן גם את מספר הפוסטים במשתמש
+  setUser(prevUser => ({
+    ...prevUser,
+    postsCount: Math.max(0, (prevUser.postsCount || 0) - 1)
+  }));
+};
+const handlePostUpdated = (updatedPost) => {
+  console.log('Post updated in profile:', updatedPost);
+  setUserPosts(prevPosts => 
+    prevPosts.map(post => 
+      post._id === updatedPost._id ? updatedPost : post
+    )
+  );
+};
 
   //  Get number of watched items from backend
   const fetchWatchedCount = async (token) => {
@@ -184,7 +217,9 @@ export default function Profile() {
           onLikePost={handleLikePost}
           currentUser={user}
           onViewProfile={handleViewProfile}
-          onViewGroup={handleViewGroup} 
+          onViewGroup={handleViewGroup}
+          onPostDeleted={handlePostDeleted} 
+          onPostUpdated={handlePostUpdated}
         />
       </div>
     </div>

@@ -63,7 +63,7 @@ export default function FriendsList({ currentUser, onViewProfile }) {
             ))
             
             // Show info message
-            alert('Friend removed from your list. Note: They may still see you in their friends list until they refresh or remove you as well.')
+            alert('Friend removed successfully! They have been removed from both friends lists.')
             
         } catch (error) {
             console.error('Error removing friend:', error)

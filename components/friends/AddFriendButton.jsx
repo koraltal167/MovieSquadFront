@@ -28,15 +28,20 @@ export default function AddFriendButton({ userId, username, currentStatus = "non
                 setStatus("sent")
                 onStatusChange?.(userId, "sent")
                 
-            } else if (status === "friends") {
-                // remove friend
-                console.log('Removing friend with userId:', userId)
-                await axios.delete(
-                    `http://localhost:3001/api/user/me/friends/${userId}`,
-                    { headers: { 'x-auth-token': token } }
+            }else if (status === "friends") {
+    // remove friend - דו-כיווני
+              console.log('Removing friend with userId:', userId)
+              const response = await axios.delete(
+                 `http://localhost:3001/api/user/me/friends/${userId}`,
+                 { headers: { 'x-auth-token': token } }
                 )
+    
+                console.log('Friend removed from both lists:', response.data)
                 setStatus("none")
                 onStatusChange?.(userId, "none")
+    
+    // הצג הודעה למשתמש
+    alert('Friend removed from both friends lists successfully!')
                 
             } else if (status === "pending") {
                 // accept friend request
